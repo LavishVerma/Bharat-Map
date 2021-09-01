@@ -12,7 +12,7 @@ export class BlockBharatMapComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-    //IntializeBlock(AppConfig.);
+    IntializeBlock(AppConfig.StateURL,AppConfig.DistrictUrl,AppConfig.BlockURL,document.getElementById("map"));
   }
 
 }
