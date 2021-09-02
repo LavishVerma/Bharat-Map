@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AppConfig } from '../utils/config';
 
-declare var IntializeBlock: Function;
+declare var IntializeState: Function;
 @Component({
   selector: 'app-block-bharat-map',
   templateUrl: './block-bharat-map.component.html',
@@ -12,7 +12,7 @@ export class BlockBharatMapComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-    IntializeBlock(AppConfig.StateURL,AppConfig.DistrictUrl,AppConfig.BlockURL,document.getElementById("map"));
+    IntializeState(AppConfig.StateURL,AppConfig.DistrictUrl,AppConfig.BlockURL,document.getElementById("map"));
   }
 
 }
