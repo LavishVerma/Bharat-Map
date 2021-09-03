@@ -1,3 +1,5 @@
+const { makeBindingParser } = require("@angular/compiler");
+
 console.log("You got me inside BlockTejasMap.js");
 
 //Initialize State
@@ -51,12 +53,13 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
      //outFields: ["*"],
      displayField: "STNAME",
      showLabels: true
+    
      });
 
      stateLayer.setRenderer(statesRenderer);
 
       // create a text symbol to define the style of labels
-      var statesLabel = new TextSymbol().setColor(new Color([230, 0, 169, 1]));
+      var statesLabel = new TextSymbol().setColor(new Color([0, 0, 0, 1]));
       statesLabel.font.setSize("8pt");
       statesLabel.font.setFamily("arial");
 
@@ -71,10 +74,10 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
        stateLayer.setLabelingInfo([ labelClass ]);
       
      var bounds = new Extent({
-        "xmin": 53.382852,
-        "ymin": 11.575403999999999,
-        "xmax": 101.446052,
-        "ymax": 34.935404,
+        "xmin": 66,
+        "ymin": 8,
+        "xmax": 102,
+        "ymax": 38,
         "spatialReference": { "wkid": 4326 }
     });
 
@@ -82,7 +85,7 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
         extent: bounds,
         center: [77.414452, 23.255404],
         zoom: 4,
-        slider: false,
+        slider: true,
         showLabels: true,
         logo: false,
         basemap: "none", //satellite,hybrid,streets
@@ -100,15 +103,17 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
                     // query.text = "California";
                     queryTask.execute(query, showResults);
                     //console.log(showResults);
+                    
     
     }
     //Show Results
     function showResults(results) {
+        console.log("State Data new ->",results);
      //Default Symbol
         var defaultSymbol = new SimpleFillSymbol().setStyle(SimpleFillSymbol.STYLE_NULL);
         defaultSymbol.outline.setStyle(SimpleLineSymbol.STYLE_NULL);
         
-            console.log("State Data new ->",results);
+            
             var resultItems = [];
             var resultCount = results.features.length;
             for (var i = 0; i < resultCount; i++) {
@@ -116,17 +121,17 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
                 resultItems.push(featureAttributes);
             }
            
-            var renderer = new UniqueValueRenderer(defaultSymbol, "State_LGD");
+            var renderer = new UniqueValueRenderer(defaultSymbol, "STCODE11");
         
             for (let i = 0; i < resultItems.length; i++) {
-                if(resultItems[i].State_LGD>0)  
-                renderer.addValue(resultItems[i].State_LGD, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([255, 0, 0, 1]), 1.25), new Color([255, 0, 0, 0.31])));
-               else
-               renderer.addValue(resultItems[i].State_LGD, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0, 0, 0, 1]), 1.25), new Color([0, 0, 0, 0])));
-
+                var randomColor =  Color.fromString(getRandomColor());
+                
+                renderer.addValue(resultItems[i].STCODE11, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0,0,0,1]), 1.25), randomColor));  
             }  
             stateLayer.setRenderer(renderer);
             map.addLayer(stateLayer);
+            
+           
         
        
     
@@ -151,16 +156,19 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
 
       stateLayer.on("click", function (evt) {
           console.log("Click working fine.."); 
+         
+          console.log("Zoom-->",map.getZoom());
+
       });
       
       
       stateLayer.on("dbl-click", function (evt) {
         var stname = esriLang.substitute(evt.graphic.attributes, '${STNAME}');
-        var stcode11 = esriLang.substitute(evt.graphic.attributes, '${State_LGD}');
+        var stcode11 = esriLang.substitute(evt.graphic.attributes, '${STCODE11}');
 
         console.log(" Double Click working fine..",stname,"<---->",stcode11);
         
-        InitializeDistrict(stname,stcode11,DistrictURL,map,stateLayer);
+        InitializeDistrict(stname,stcode11,DistrictURL,BlockURL,map,stateLayer);
     });
        
       map.on("layer-add", function (evt){
@@ -180,7 +188,7 @@ console.log(evt);
         // map.disableScrollWheelZoom();
          map.disableDoubleClickZoom();
          //map.disableMapNavigation();
-         
+         map.showZoomSlider();
          
          // map.disableRubberBandZoom();
          // map.disablePan();
@@ -198,7 +206,7 @@ console.log(evt);
 }
 
 //Initialize District
-function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
+function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateLayer)
 {
     require([
         "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
@@ -253,8 +261,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
     
                     var query = new esri.tasks.Query();
                     query.returnGeometry = false;
-                    query.where = "1=1";
-                    query.where = "State_LGD = " + StateCode;
+                    query.where = "stcode11 = '" + StateCode + "' ";
                     query.outFields = ["*"];
                     // query.text = "California";
                     queryTask.execute(query, showResults);
@@ -275,10 +282,11 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
                    resultItems.push(featureAttributes);
                }
               
-               var renderer = new UniqueValueRenderer(defaultSymbol, "Dist_LGD");
+               var renderer = new UniqueValueRenderer(defaultSymbol, "dtcode11");
            
                for (let i = 0; i < resultItems.length; i++) {
-                 renderer.addValue(resultItems[i].Dist_LGD, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0, 38, 115, 1]), 1.25), new Color([255, 0, 197, 0.6]))); 
+                var randomColor =  Color.fromString(getRandomColor());
+                 renderer.addValue(resultItems[i].dtcode11, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0,0,0,1]), 0.75), randomColor)); 
                }  
                districtLayer.setRenderer(renderer);
                stateLayer.hide();
@@ -307,7 +315,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
           districtLayer.on("dbl-click", function (evt) {
            console.log("Map event:--",evt);
             console.log(" Double Click working fine in Disrtrict..");
-            
+            InitializeBlock(BlockURL,evt.graphic.attributes,map,districtLayer);
         });
         //Events end
        
@@ -318,7 +326,8 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
     });
 }
 
- function InitializeBlock(BlockName,BlockCode,map){
+//Initialize Block
+function InitializeBlock(BlockURL,attributes,map,districtLayer){
  
     require([
         "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
@@ -350,16 +359,72 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,map,stateLayer)
         SimpleLineSymbol, SimpleFillSymbol,
         SimpleRenderer, Color, number, domStyle, FeatureTable
     ) {
+        console.log("Inside BLock");
         //Declare Variable
         var blockLayer;
-        //Declare District Layer
-        blockLayer = new FeatureLayer(DistrictURL, {
+        //Declare Block Layer
+        blockLayer = new FeatureLayer(BlockURL, {
             mode: FeatureLayer.MODE_ONDEMAND,
             outFields: ["*"],
-            //outFields: ["*"],
-            displayField: "dtname",
+            displayField: "block_name",
             showLabels: false
         });
 
+        fillColorBlock();
+        function fillColorBlock(){
+  console.log("Inside Fill color");
+          var queryTask = new esri.tasks.QueryTask(BlockURL);
+      
+                      var query = new esri.tasks.Query();
+                      query.returnGeometry = false;
+                      query.where = "stcode11 = '" + attributes.stcode11 + "' and dtcode11 = '" + attributes.dtcode11 + "'";
+                    // query.where = "1=1"; //Getting all data
+                     query.outFields = ["*"];
+                      
+                      queryTask.execute(query, showResults);
+                      console.log(attributes);
+                      console.log(blockLayer);
+                     
+      
+      }
+      function showResults(results) {
+        console.log("Block Data new ->",results);
+        //Default Symbol
+           var defaultSymbol = new SimpleFillSymbol().setStyle(SimpleFillSymbol.STYLE_NULL);
+           defaultSymbol.outline.setStyle(SimpleLineSymbol.STYLE_NULL);
+           
+             
+               var resultItems = [];
+               var resultCount = results.features.length;
+               for (var i = 0; i < resultCount; i++) {
+                   var featureAttributes = results.features[i].attributes;
+                   resultItems.push(featureAttributes);
+               }
+              
+               var renderer = new UniqueValueRenderer(defaultSymbol, "block_lgd");
+           
+               for (let i = 0; i < resultItems.length; i++) {
+                var randomColor =  Color.fromString(getRandomColor());
+                 renderer.addValue(resultItems[i].block_lgd, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0,0,0,1]), 0.50), randomColor)); 
+               }  
+              blockLayer.setRenderer(renderer);
+               districtLayer.hide();
+               map.addLayer(blockLayer);
+           
+          
+       
+           
+           
+       }
+
   }); 
  }  
+
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
