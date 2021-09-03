@@ -146,12 +146,17 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
     
       //Events
       stateLayer.on("mouse-over", function (evt) {
-    //console.log("Mouse-over working fine..");
+       var stname = esriLang.substitute(evt.graphic.attributes, '${STNAME}');
+       map.setMapCursor("pointer");
+       map.infoWindow.setContent('<div  >' + '' + stname + '</div>');
+       map.infoWindow.resize(140,100);
+       map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
       });
 
       stateLayer.on("mouse-out", function (evt) {
-        //console.log("Mouse-out working fine..");
-    
+        
+        map.setMapCursor("default");
+        map.infoWindow.hide();
       });
 
       stateLayer.on("click", function (evt) {
@@ -300,11 +305,18 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
 
          //Events start
          districtLayer.on("mouse-over", function (evt) {
-          // console.log("Mouse-over working fine in District..");
+
+            var dtname = esriLang.substitute(evt.graphic.attributes, '${dtname}');
+            map.setMapCursor("pointer");
+            map.infoWindow.setContent('<div  >' + '' + dtname + '</div>');
+            map.infoWindow.resize(140,100);
+            map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+            
           });
     
           districtLayer.on("mouse-out", function (evt) {
-           // console.log("Mouse-out working fine in District..");
+            map.setMapCursor("default");
+           map.infoWindow.hide();
         
           });
     
@@ -372,7 +384,7 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
 
         fillColorBlock();
         function fillColorBlock(){
-  console.log("Inside Fill color");
+          console.log("Inside Fill color");
           var queryTask = new esri.tasks.QueryTask(BlockURL);
       
                       var query = new esri.tasks.Query();
@@ -416,6 +428,34 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
            
            
        }
+
+        //Events start--------------
+        blockLayer.on("mouse-over", function (evt) {
+
+            var dtname = esriLang.substitute(evt.graphic.attributes, '${block_name}');
+            map.setMapCursor("pointer");
+            map.infoWindow.setContent('<div  >' + '' + dtname + '</div>');
+            map.infoWindow.resize(140,100);
+            map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+            
+          });
+    
+          blockLayer.on("mouse-out", function (evt) {
+            map.setMapCursor("default");
+           map.infoWindow.hide();
+        
+          });
+    
+          blockLayer.on("click", function (evt) {
+             // console.log("Click working fine in Block.."); 
+          });
+
+          blockLayer.on("dbl-click", function (evt) {
+           console.log("Map event:--",evt);
+            console.log(" Double Click working fine in BLock..");
+            
+        });
+        //Events end-----------------
 
   }); 
  }  
