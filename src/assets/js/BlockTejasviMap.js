@@ -40,6 +40,10 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
      
      //Varialbles declarations
      var stateLayer;
+
+     //For back button functionaity...
+     var div = document.getElementById('mapback');
+     div.innerHTML = '<b>' + "India" + '</b>';
      
      // create a renderer for the states layer to override default symbology
      var statesColor = new Color("#000000");
@@ -243,8 +247,15 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
         SimpleLineSymbol, SimpleFillSymbol,
         SimpleRenderer, Color, number, domStyle, FeatureTable
     ) {
+
+       
+     //For back button functionaity...
+     var div = document.getElementById('mapback');
+     div.innerHTML = '<b>India | ' + StateName + '</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoState()'>Back</a>";
+
         //Declare Variable
         var districtLayer;
+
 
         //Declare District Layer
         districtLayer = new FeatureLayer(DistrictURL, {
@@ -371,7 +382,10 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
         SimpleLineSymbol, SimpleFillSymbol,
         SimpleRenderer, Color, number, domStyle, FeatureTable
     ) {
-        console.log("Inside BLock");
+        //For back button functionaity...
+     var div = document.getElementById('mapback');
+     console.log("Attributes fro block",attributes);
+     div.innerHTML = '<b> India | ' + attributes.stname + ' | '+ attributes.dtname+'</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoDistrict()'>Back</a>";
         //Declare Variable
         var blockLayer;
         //Declare Block Layer
@@ -467,4 +481,12 @@ function getRandomColor() {
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+}
+
+function backtoState() {
+    console.log("Inside back to State");
+}
+
+function backtoDistrict() {
+    console.log("Inside back to District");
 }
