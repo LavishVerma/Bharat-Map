@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { AppConfig } from '../utils/config';
 
 declare var IntializeState: Function;
+
 @Component({
   selector: 'app-block-bharat-map',
   templateUrl: './block-bharat-map.component.html',
@@ -9,10 +10,30 @@ declare var IntializeState: Function;
 })
 export class BlockBharatMapComponent implements OnInit {
 
-  constructor() { }
-
+  StateUrl = AppConfig.StateURL;
+  DistrictUrl = AppConfig.DistrictUrl;
+  VillageUrl = AppConfig.VillageUrl;
+  PanchayatUrl = AppConfig.PanchayatUrl;
+  BlockUrl = AppConfig.BlockURL;
+  constructor(private ngZone: NgZone) { }
+  private applicationsByState: { [key: string]: any[] } = {};
   ngOnInit(): void {
-    IntializeState(AppConfig.StateURL,AppConfig.DistrictUrl,AppConfig.BlockURL,document.getElementById("map"));
+    window['angularComponentReference']  = { component: this, zone: this.ngZone, loadAngularFunction: () => this.gotoState(), };
+    window['angularComponentReference1']  = { component: this, zone: this.ngZone, loadAngularFunction: () => this.gotoDisrtict(), };
+    console.log("Bharat map ts loaded");
+    
+    
+    IntializeState(this.StateUrl,this.DistrictUrl,this.BlockUrl,this.PanchayatUrl,document.getElementById("map"),    );
+  }  
+  gotoDisrtict() {
+    console.log("Inside ts back to District");
   }
+  gotoState() {     
+    console.log("Inside ts back to State");
+    IntializeState(this.StateUrl,this.DistrictUrl,this.BlockUrl,document.getElementById("map"));
+  }
+  
+}   
+ 
+ 
 
-}

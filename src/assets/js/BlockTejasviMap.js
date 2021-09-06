@@ -1,9 +1,9 @@
 const { makeBindingParser } = require("@angular/compiler");
 
-console.log("You got me inside BlockTejasMap.js");
-
+//console.log("You got me inside BlockTejasMap.js");
+var map;
 //Initialize State
-function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
+function IntializeState(StateURL,DistrictURL,BlockURL,PanchayatUrl,mapID,mapdrilldown){
 
     require([
         "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
@@ -37,7 +37,11 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
         SimpleRenderer, Color, number, domStyle, FeatureTable, LabelClass
     ) {
 //Main logic here
-     
+   
+     //If map already exist 
+     if (map) {
+        map.destroy();
+    }
      //Varialbles declarations
      var stateLayer;
 
@@ -85,7 +89,7 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
         "spatialReference": { "wkid": 4326 }
     });
 
-    var map = new Map(mapID, {
+     map = new Map(mapID, {
         extent: bounds,
         center: [77.414452, 23.255404],
         zoom: 4,
@@ -104,7 +108,6 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
                     query.returnGeometry = false;
                     query.where = "1=1";
                     query.outFields = ["*"];
-                    // query.text = "California";
                     queryTask.execute(query, showResults);
                     //console.log(showResults);
                     
@@ -136,19 +139,15 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
             map.addLayer(stateLayer);
             
            
-        
-       
     
-        
-        // runLog();
     }
 
    
-     console.log("Map is--",map);
+     console.log("Map in State layer is--",map);
      
     
     
-      //Events
+      //Events started
       stateLayer.on("mouse-over", function (evt) {
        var stname = esriLang.substitute(evt.graphic.attributes, '${STNAME}');
        map.setMapCursor("pointer");
@@ -174,20 +173,18 @@ function IntializeState(StateURL,DistrictURL,BlockURL,mapID){
       stateLayer.on("dbl-click", function (evt) {
         var stname = esriLang.substitute(evt.graphic.attributes, '${STNAME}');
         var stcode11 = esriLang.substitute(evt.graphic.attributes, '${STCODE11}');
-
-        console.log(" Double Click working fine..",stname,"<---->",stcode11);
-        
-        InitializeDistrict(stname,stcode11,DistrictURL,BlockURL,map,stateLayer);
+ 
+        InitializeDistrict(evt.graphic.attributes,DistrictURL,BlockURL,PanchayatUrl,map,stateLayer);
     });
        
       map.on("layer-add", function (evt){
        // map.setExtent(evt.fullExtent);
-          console.log("layer-add seems to be working..");
-          console.log(evt);
+         
       });
+
       map.on("extent-change",function(evt){
-console.log("Extent change seems to be OK..");
-console.log(evt);
+        console.log("Extent change seems to be OK..");
+        
       });
       
       map.on("load", function () {
@@ -215,7 +212,7 @@ console.log(evt);
 }
 
 //Initialize District
-function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateLayer)
+function InitializeDistrict(attributes,DistrictURL,BlockURL,PanchayatUrl,map,stateLayer)
 {
     require([
         "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
@@ -251,7 +248,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
        
      //For back button functionaity...
      var div = document.getElementById('mapback');
-     div.innerHTML = '<b>India | ' + StateName + '</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoState()'>Back</a>";
+     div.innerHTML = '<b>India | ' + attributes.STNAME + '</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoState()'>Back</a>";
 
         //Declare Variable
         var districtLayer;
@@ -261,15 +258,12 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
         districtLayer = new FeatureLayer(DistrictURL, {
             mode: FeatureLayer.MODE_ONDEMAND,
             outFields: ["*"],
-            //outFields: ["*"],
             displayField: "dtname",
             showLabels: false
         });
 
-        //Adding District Layer to Map..
-  
 
-
+        //Calling function to give random colors to District..
         fillColorDistrict();
       function fillColorDistrict(){
 
@@ -277,11 +271,10 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
     
                     var query = new esri.tasks.Query();
                     query.returnGeometry = false;
-                    query.where = "stcode11 = '" + StateCode + "' ";
+                    query.where = "stcode11 = '" + attributes.STCODE11 + "' ";
                     query.outFields = ["*"];
-                    // query.text = "California";
                     queryTask.execute(query, showResults);
-                    //console.log(showResults);
+                    
     
     }
     //Show Results
@@ -290,7 +283,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
            var defaultSymbol = new SimpleFillSymbol().setStyle(SimpleFillSymbol.STYLE_NULL);
            defaultSymbol.outline.setStyle(SimpleLineSymbol.STYLE_NULL);
            
-               console.log("District Data new ->",results);
+               
                var resultItems = [];
                var resultCount = results.features.length;
                for (var i = 0; i < resultCount; i++) {
@@ -308,10 +301,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
                stateLayer.hide();
                map.addLayer(districtLayer);
            
-          
-       
-           
-           // runLog();
+ 
        }
 
          //Events start
@@ -327,7 +317,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
     
           districtLayer.on("mouse-out", function (evt) {
             map.setMapCursor("default");
-           map.infoWindow.hide();
+            map.infoWindow.hide();
         
           });
     
@@ -336,9 +326,9 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
           });
 
           districtLayer.on("dbl-click", function (evt) {
-           console.log("Map event:--",evt);
+            console.log("Map event:--",evt);
             console.log(" Double Click working fine in Disrtrict..");
-            InitializeBlock(BlockURL,evt.graphic.attributes,map,districtLayer);
+            InitializeBlock(BlockURL,evt.graphic.attributes,map,districtLayer,PanchayatUrl);
         });
         //Events end
        
@@ -350,7 +340,7 @@ function InitializeDistrict(StateName, StateCode,DistrictURL,BlockURL,map,stateL
 }
 
 //Initialize Block
-function InitializeBlock(BlockURL,attributes,map,districtLayer){
+function InitializeBlock(BlockURL,attributes,map,districtLayer,PanchayatUrl){
  
     require([
         "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
@@ -384,7 +374,7 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
     ) {
         //For back button functionaity...
      var div = document.getElementById('mapback');
-     console.log("Attributes fro block",attributes);
+   
      div.innerHTML = '<b> India | ' + attributes.stname + ' | '+ attributes.dtname+'</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoDistrict()'>Back</a>";
         //Declare Variable
         var blockLayer;
@@ -408,8 +398,7 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
                      query.outFields = ["*"];
                       
                       queryTask.execute(query, showResults);
-                      console.log(attributes);
-                      console.log(blockLayer);
+                      
                      
       
       }
@@ -467,13 +456,135 @@ function InitializeBlock(BlockURL,attributes,map,districtLayer){
           blockLayer.on("dbl-click", function (evt) {
            console.log("Map event:--",evt);
             console.log(" Double Click working fine in BLock..");
-            
+            InitializePanchayat(PanchayatUrl,evt.graphic.attributes,map,blockLayer); 
         });
         //Events end-----------------
 
   }); 
  }  
 
+ //Initialize panchayat
+ function InitializePanchayat(PanchayatUrl,attributes,map,blockLayer){
+    require([
+        "dojo/dom-construct", "esri/dijit/BasemapGallery", "esri/dijit/BasemapToggle",
+        "esri/map", "esri/geometry/webMercatorUtils",
+        "esri/layers/FeatureLayer",
+        "esri/dijit/Legend", "esri/dijit/Search", "esri/renderers/ScaleDependentRenderer",
+        "esri/symbols/Font", "esri/geometry/Point",
+        "esri/SpatialReference", "esri/graphic", "esri/lang",
+        "esri/dijit/PopupTemplate",
+        "esri/renderers/UniqueValueRenderer", "esri/symbols/TextSymbol",
+        "dijit/registry", "dijit/form/Button", "dijit/TooltipDialog",
+        "dijit/popup", "esri/arcgis/utils",
+        "esri/geometry/Extent",
+        "esri/InfoTemplate", "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/PictureMarkerSymbol", "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleFillSymbol", "esri/renderers/SimpleRenderer",
+        "esri/Color", "dojo/number", "dojo/dom-style", "esri/dijit/FeatureTable",
+        "dojo/domReady!"
+    ], function (
+        domConstruct, BasemapGallery, BasemapToggle,
+        Map, webMercatorUtils, FeatureLayer, Legend,
+        Search, ScaleDependentRenderer, Font, Point, SpatialReference,
+        Graphic, esriLang, PopupTemplate,
+        UniqueValueRenderer, TextSymbol, registry,
+        Button, TooltipDialog, dijitPopup,
+        arcgisUtils,
+        Extent,
+        InfoTemplate, SimpleMarkerSymbol, PictureMarkerSymbol,
+        SimpleLineSymbol, SimpleFillSymbol,
+        SimpleRenderer, Color, number, domStyle, FeatureTable
+    ) {
+    //For back button functionaity...
+    var div = document.getElementById('mapback');
+   
+    div.innerHTML = '<b> India | ' + attributes.state + ' | '+ attributes.district+' | '+ attributes.block_name+'</b>' + ' |  ' + "<a href='javascript:void(0)' onclick='backtoDistrict()'>Back</a>";
+    //Declare Variable
+    var panchayatLayer;
+    //Declare Panchayat Layer
+    panchayatLayer = new FeatureLayer(PanchayatUrl, {
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields: ["*"],
+        displayField: "gp_name",
+        showLabels: false
+    });
+
+    fillColorPanchayat();
+        function fillColorPanchayat(){
+          console.log("Inside Fill color");
+          var queryTask = new esri.tasks.QueryTask(PanchayatUrl);
+      
+                      var query = new esri.tasks.Query();
+                      query.returnGeometry = false;
+                      query.where = "dtcode11 = '" + attributes.dtcode11 + "' and blk_lgdcod = '" + attributes.block_lgd + "'";
+                     //query.where = "1=1"; //Getting all data
+                     query.outFields = ["*"];
+                      
+                      queryTask.execute(query, showResults);
+                      
+                     
+      
+      }
+      function showResults(results) {
+        console.log("Panchayat Data new ->",results);
+        //Default Symbol
+           var defaultSymbol = new SimpleFillSymbol().setStyle(SimpleFillSymbol.STYLE_NULL);
+           defaultSymbol.outline.setStyle(SimpleLineSymbol.STYLE_NULL);
+           
+             
+               var resultItems = [];
+               var resultCount = results.features.length;
+               for (var i = 0; i < resultCount; i++) {
+                   var featureAttributes = results.features[i].attributes;
+                   resultItems.push(featureAttributes);
+               }
+              
+               var renderer = new UniqueValueRenderer(defaultSymbol, "gp_code");
+           
+               for (let i = 0; i < resultItems.length; i++) {
+                var randomColor =  Color.fromString(getRandomColor());
+                 renderer.addValue(resultItems[i].gp_code, new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new Color([0,0,0,1]), 0.50), randomColor)); 
+               }  
+               panchayatLayer.setRenderer(renderer);
+              blockLayer.hide();
+            map.addLayer(panchayatLayer);
+           
+          
+       
+           
+           
+       }
+
+       //Events start
+       panchayatLayer.on("mouse-over", function (evt) {
+
+        var gp_name = esriLang.substitute(evt.graphic.attributes, '${gp_name}');
+        map.setMapCursor("pointer");
+        map.infoWindow.setContent('<div  >' + '' + gp_name + '</div>');
+        map.infoWindow.resize(140,100);
+        map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+        
+      });
+
+      panchayatLayer.on("mouse-out", function (evt) {
+        map.setMapCursor("default");
+        map.infoWindow.hide();
+    
+      });
+
+      panchayatLayer.on("click", function (evt) {
+         // console.log("Click working fine in Panchayat.."); 
+      });
+
+      panchayatLayer.on("dbl-click", function (evt) {
+        console.log("Map event:--",evt);
+        console.log(" Double Click working fine in Panchayat..");
+       //last layer
+    });
+    //Events end
+
+    });
+ }
 function getRandomColor() {
     var letters = '0123456789ABCDEF';
     var color = '#';
@@ -484,9 +595,9 @@ function getRandomColor() {
 }
 
 function backtoState() {
-    console.log("Inside back to State");
+    window.angularComponentReference.zone.run(() => { window.angularComponentReference.loadAngularFunction();});
 }
 
 function backtoDistrict() {
-    console.log("Inside back to District");
+    window.angularComponentReference1.zone.run(() => { window.angularComponentReference1.loadAngularFunction();});
 }
